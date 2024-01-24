@@ -1,3 +1,4 @@
+FROM golang:1.19
 FROM ubuntu
 
 ENV TZ=Europe/Berlin
@@ -29,7 +30,22 @@ RUN mkdir -p /usr/local/var/run
 
 
 # install cifuzz
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/CodeIntelligenceTesting/cifuzz/main/install.sh)"
+#RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/CodeIntelligenceTesting/cifuzz/main/install.sh)"
+RUN apt-get update -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false && apt-get install -y git make cmake clang llvm libcap-dev default-jdk maven gradle nodejs 
+
+RUN curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
+RUN chmod +x /usr/local/bin/bazel
+
+RUN curl https://dl.google.com/go/go1.21.6.linux-amd64.tar.gz -o go1.21.6.linux-amd64.tar.gz
+RUN rm -rf /usr/local/go 
+RUN tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
+ENV PATH="/usr/local/go/bin:${PATH}"
+RUN go version
+
+RUN git clone https://github.com/0roman/cifuzz.git
+WORKDIR /cifuzz
+RUN make
+RUN make install
 RUN cifuzz --version
 
 # nscd required to be running by ntpd
